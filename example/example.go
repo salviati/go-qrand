@@ -26,6 +26,7 @@ import (
 	"qrand"
 	"fmt"
 	"log"
+	"os"
 )
 
 var (
@@ -38,6 +39,12 @@ var (
 
 func main() {
 	flag.Parse()
+	
+	if *user == "" || *pass == "" {
+		fmt.Println("Username and password are required parameters.\n\n Usage:")
+		flag.PrintDefaults()
+		os.Exit(0)
+	}
 	
  	q, err := qrand.NewQRand(*user, *pass, *cachesize, *host, *port)
  	if err != nil { log.Fatal(err) }
