@@ -22,8 +22,8 @@
 package main
 
 import (
+	"github.com/salviati/go-qrand/qrand"
 	"flag"
-	"qrand"
 	"fmt"
 	"log"
 	"os"
@@ -32,7 +32,7 @@ import (
 var (
 	user = flag.String("u", "", "Username for QRNG server")
 	pass = flag.String("p", "", "Password for QRNG server")
-	cachesize = flag.Int("c", 1024, "Cache size")
+	cachesize = flag.Int("c", 16, "Cache size")
 	host = flag.String("host", qrand.Host, "Host name")
 	port = flag.String("port", qrand.Port, "Port")
 )
@@ -65,7 +65,7 @@ func main() {
 	if err != nil { log.Fatal(err) }
 	fmt.Println(i64)
 	
-	buf := make([]byte, 128)
+	buf := make([]byte, 16)
 	_, err = q.ReadBytes(buf)
 	if err != nil { log.Fatal(err) }
 	fmt.Println(buf)
