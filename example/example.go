@@ -32,7 +32,7 @@ import (
 var (
 	user = flag.String("u", "", "Username for QRNG server")
 	pass = flag.String("p", "", "Password for QRNG server")
-	cachesize = flag.Int("c", 16, "Cache size")
+	cachesize = flag.Int("b", 16, "Buffer size")
 	host = flag.String("host", qrand.Host, "Host name")
 	port = flag.String("port", qrand.Port, "Port")
 )

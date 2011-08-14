@@ -18,6 +18,7 @@
    51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+// BUG(utkan): bufio.Read wastes data on large-reads. Don't use it.
 
 // Go client for quantum random number generator service at random.irb.hr
 package qrand
@@ -75,6 +76,7 @@ type QRand struct {
 func (q *QRand) Read(rand []byte) (int, os.Error) {
 	q.l.Lock() // Prevent double dials
 	defer q.l.Unlock()
+	fmt.Println("req: ", len(rand))
 
 	c, err := net.Dial("tcp", net.JoinHostPort(Host,Port))
 	if err != nil { return 0, err }
@@ -118,7 +120,7 @@ func (q *QRand) readBytes(n int) ([]byte, os.Error) {
 	rand := make([]byte, n)
 	read, err := q.ReadBytes(rand)
 	if err != nil {return rand, err}
-	if read != n { return rand, os.NewError("qrand: Receieved insufficient data.") }
+	if read != n { return rand, os.NewError(fmt.Sprintf("qrand: Receieved insufficient data; requested: %d, received: %d", n, read)) }
 	return rand, nil
 }
 
