@@ -253,20 +253,20 @@ func (q *QRand) Int64() (r int64, err os.Error) {
 
 // Float32 fetches 32-bit random data and returns it as a float32 in [0.0,1.0)
 func (q *QRand) Float32() (r float32, err os.Error) {
-	n, err := q.Int32()
+	n, err := q.Uint32()
 	if err != nil {
 		return 0, err
 	}
-	return float32(n) / (1<<32 - 1 - 1), err
+	return float32(n) / (1<<32), err
 }
 
 // Float64 fetches 64-bit random data and returns it as a float64 in [0.0,1.0)
 func (q *QRand) Float64() (r float64, err os.Error) {
-	n, err := q.Int64()
+	n, err := q.Uint64()
 	if err != nil {
 		return 0, err
 	}
-	return float64(n) / (1<<64 - 1 - 1), err
+	return float64(n) / (1<<64), err
 }
 
 // NewQRand creates a new instances of Quantum Random Bit Generator client.
