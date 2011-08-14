@@ -68,7 +68,7 @@ type QRand struct {
 	l sync.Mutex
 }
 
-// Requests len(rand) bytes from QRNG server.
+// Read requests len(rand) bytes from QRNG server.
 // This function does not user the buffer and
 // always creates a new connection.
 // Try not to use this function ---the function
@@ -84,7 +84,7 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 	
 	b := bytes.NewBuffer([]byte(""))
 	fmt.Fprintf(b, "%c", 0)
-	binary.Write(b, binary.BigEndian, uint16(len(q.user) + len(q.pass) + 6))
+	binary.Write(b, binary.BigEndian, uint32(len(q.user) + len(q.pass) + 6))
 	fmt.Fprintf(b, "%c%s%c%s", len(q.user), q.user, len(q.pass), q.pass)
 	binary.Write(b, binary.BigEndian, uint32(len(rand)))
 	_, err = c.Write(b.Bytes())
@@ -109,7 +109,8 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 	return int(available), err
 }
 
-
+// ReadData tries to read len(b) bytes of data into b.
+// It returns the number of bytes actually read, which can be less than len(b).
 func (q *QRand) ReadBytes(b []byte) (int, os.Error) {
 	return q.buf.Read(b)
 }
@@ -122,30 +123,35 @@ func (q *QRand) readBytes(n int) ([]byte, os.Error) {
 	return rand, nil
 }
 
+// Uint8 fetches 8-bit random data and returns it as uint8.
 func (q *QRand) Uint8() (uint8, os.Error) {
 	data, err := q.readBytes(1)
 	return data[0], err
 }
 
+// Int8 fetches 8-bit random data and returns it as int8.
 func (q *QRand) Int8() (int8, os.Error) {
 	data, err := q.readBytes(1)
 	return int8(data[0]), err
 }
 
-func (q *QRand) Uint16() (r uint16, err os.Error) {
+// Uint32 fetches 32-bit random data and returns it as uint32.
+func (q *QRand) Uint32() (r uint32, err os.Error) {
 	data, err := q.readBytes(2)
 	if err != nil { return 0, err }
 	binary.Read(bytes.NewBuffer(data), binary.BigEndian, &r)
 	return r, err
 }
 
-func (q *QRand) Int16() (r int16, err os.Error) {
+// Int32 fetches 32-bit random data and returns it as uint32.
+func (q *QRand) Int32() (r int32, err os.Error) {
 	data, err := q.readBytes(2)
 	if err != nil { return 0, err }
 	binary.Read(bytes.NewBuffer(data), binary.BigEndian, &r)
 	return r, err
 }
 
+// Uint32 fetches 32-bit random data and returns it as uint32.
 func (q *QRand) Uint32() (r uint32, err os.Error) {
 	data, err := q.readBytes(4)
 	if err != nil { return 0, err }
@@ -153,6 +159,7 @@ func (q *QRand) Uint32() (r uint32, err os.Error) {
 	return r, err
 }
 
+// Int32 fetches 32-bit random data and returns it as uint32.
 func (q *QRand) Int32() (r int32, err os.Error) {
 	data, err := q.readBytes(4)
 	if err != nil { return 0, err }
@@ -160,6 +167,7 @@ func (q *QRand) Int32() (r int32, err os.Error) {
 	return r, err
 }
 
+// Uint64 fetches 64-bit random data and returns it as uint64.
 func (q *QRand) Uint64() (r uint64, err os.Error) {
 	data, err := q.readBytes(8)
 	if err != nil { return 0, err }
@@ -167,6 +175,7 @@ func (q *QRand) Uint64() (r uint64, err os.Error) {
 	return r, err
 }
 
+// Int64 fetches 64-bit random data and returns it as uint64.
 func (q *QRand) Int64() (r int64, err os.Error) {
 	data, err := q.readBytes(8)
 	if err != nil { return 0, err }
@@ -174,18 +183,23 @@ func (q *QRand) Int64() (r int64, err os.Error) {
 	return r, err
 }
 
+// Float32 fetches 64-bit random data and returns it as a float64 in [0.0,1.0)
 func (q *QRand) Float32() (r float32, err os.Error) {
 	n, err := q.Int32()
 	if err != nil { return 0, err }
 	return float32(n)/(1<<32-1-1), err
 }
 
+// Float32 fetches 64-bit random data and returns it as a float32 in [0.0,1.0)
 func (q *QRand) Float64() (r float64, err os.Error) {
 	n, err := q.Int64()
 	if err != nil { return 0, err }
 	return float64(n)/(1<<64-1-1), err
 }
 
+// NewQRand creates a new instances of Quantum Random Bit Generator client.
+// The client-side should have a username and password from the relevant web-site.
+// When host and/or port are empty, they are replaced by the default values, Host and Port.
 func NewQRand(user, pass string, cachesize int, host, port string) (*QRand, os.Error) {
 	if cachesize < CacheSizeMin { cachesize = CacheSizeMin }
 	if host == "" { host = Host }
