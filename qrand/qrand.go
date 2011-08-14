@@ -18,8 +18,6 @@
    51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// BUG(utkan): bufio.Read wastes data on large-reads. Don't use it.
-
 // Go client for quantum random number generator service at random.irb.hr
 package qrand
 
@@ -30,7 +28,6 @@ import (
 	"bytes"
  	"encoding/binary"
 	"os"
-	"bufio"
 )
 
 const (
@@ -63,8 +60,9 @@ var remedy = []string {
 
 
 type QRand struct {
+	buffer, b []byte
+	buffersize int
 	user, pass string
-	buf *bufio.Reader
 	l sync.Mutex
 }
 
@@ -74,9 +72,7 @@ type QRand struct {
 // Try not to use this function —the function
 // you're looking for is probably ReadBytes().
 func (q *QRand) Read(rand []byte) (int, os.Error) {
-	q.l.Lock() // Prevent double dials
-	defer q.l.Unlock()
-	fmt.Println("req: ", len(rand))
+	if len(rand) == 0 { return 0, nil }
 
 	c, err := net.Dial("tcp", net.JoinHostPort(Host,Port))
 	if err != nil { return 0, err }
@@ -112,8 +108,52 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 
 // ReadData tries to read len(b) bytes of data into b.
 // It returns the number of bytes actually read, which can be less than len(b).
-func (q *QRand) ReadBytes(b []byte) (int, os.Error) {
-	return q.buf.Read(b)
+func (q *QRand) ReadBytes(p []byte) (int, os.Error) {
+	if len(p) == 0 { return 0, nil }
+
+	q.l.Lock()
+	defer q.l.Unlock()
+
+	// We have enough data in the buffer
+	if len(q.b) >= len(p) {
+		copy(p, q.b[:len(p)])
+		q.b = q.b[len(p):]
+		return len(p), nil
+	}
+	
+	read := 0
+	// First empty the buffer
+	copy(p, q.b)
+	p = p[len(q.b):]
+	read += len(q.b)
+	q.b = q.b[:0]
+
+	// If required data is greater than buffer size, directly read into p
+	if len(p) > len(q.buffer) {
+		n, err := q.Read(p)
+		read += n
+		if err != nil { return read, err }
+		return read, err
+	}
+	
+	// Fill in the buffer, and read from it.
+	n, err := q.Read(q.buffer)
+	if err != nil { return n, err }
+	q.b = q.buffer[:n]
+	
+	if len(q.b) >= len(p) {
+		copy(p, q.b[:len(p)])
+		read += len(p)
+		q.b = q.b[len(p):]
+		return read, nil
+	}
+	
+	// Shouldn't happen normally
+	copy(p, q.b)
+	read += len(q.b)
+	q.b = q.b[:0]
+
+	return read, nil
 }
 
 func (q *QRand) readBytes(n int) ([]byte, os.Error) {
@@ -204,11 +244,8 @@ func (q *QRand) Float64() (r float64, err os.Error) {
 // When host and/or port are empty,
 // they are replaced by the default values, Host and Port.
 func NewQRand(user, pass string, buffersize int, host, port string) (*QRand, os.Error) {
+	if buffersize < 1 { return nil, os.NewError("qrand: buffersize is too small.") }
 	if host == "" { host = Host }
 	if port == "" { port = Port }
-	q := &QRand{ user: user, pass: pass }
-	buf, err := bufio.NewReaderSize(q, buffersize)
-	if err != nil { return nil, err }
-	q.buf = buf
-	return q, nil
+	return &QRand{ user: user, pass: pass, buffer: make([]byte, buffersize) }, nil
 }
