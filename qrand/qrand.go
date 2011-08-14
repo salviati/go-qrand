@@ -100,7 +100,7 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 	binary.Read(b, binary.BigEndian, &remedyCode)
 	
 	if responseCode != 0 || remedyCode != 0 {
-		return 0, os.NewError(response[responseCode] + ": " + remedy[remedyCode])
+		return 0, os.NewError("qrand: " + response[responseCode] + ": " + remedy[remedyCode])
 	}
 	
 	var available uint32
@@ -108,6 +108,7 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 	_, err = c.Read(rand[:available])
 	return int(available), err
 }
+
 
 func (q *QRand) ReadBytes(b []byte) (int, os.Error) {
 	return q.buf.Read(b)
