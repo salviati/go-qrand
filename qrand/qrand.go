@@ -152,7 +152,6 @@ func (q *QRand) ReadBytes(p []byte) (int, os.Error) {
 	copy(p, q.b)
 	read += len(q.b)
 	q.b = q.b[:0]
-
 	return read, nil
 }
 
