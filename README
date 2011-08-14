@@ -5,3 +5,7 @@ goinstall github.com/salviati/go-qrand/qrand
 Then you can use the package as
 
 import "github.com/salviati/go-qrand" qrand
+
+
+
+(This is go-qrand release branch)
