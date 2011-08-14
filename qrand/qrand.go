@@ -63,7 +63,6 @@ var remedy = []string {
 
 
 type QRand struct {
-	cache []byte
 	user, pass string
 	buf *bufio.Reader
 	l sync.Mutex
@@ -105,7 +104,6 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 	
 	var available uint32
 	binary.Read(b, binary.BigEndian, &available)
-	q.cache = make([]byte, available)
 	_, err = c.Read(rand[:available])
 	return int(available), err
 }
