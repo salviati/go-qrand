@@ -80,12 +80,13 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 	c, err := net.Dial("tcp", net.JoinHostPort(Host,Port))
 	if err != nil { return 0, err }
 	defer c.Close()
+
 	
 	b := bytes.NewBuffer([]byte(""))
 	fmt.Fprintf(b, "%c", 0)
 	binary.Write(b, binary.BigEndian, uint16(len(q.user) + len(q.pass) + 6))
 	fmt.Fprintf(b, "%c%s%c%s", len(q.user), q.user, len(q.pass), q.pass)
-	binary.Write(b, binary.BigEndian, len(rand))
+	binary.Write(b, binary.BigEndian, uint32(len(rand)))
 	_, err = c.Write(b.Bytes())
 	if err != nil { return 0, err }
 
