@@ -35,7 +35,6 @@ import (
 const (
 	Host = "random.irb.hr"
 	Port = "1227"
-	CacheSizeMin = 8 // One call to bytes() should handle all cases.
 )
 
 var response = []string {
@@ -71,7 +70,7 @@ type QRand struct {
 // Read requests len(rand) bytes from QRNG server.
 // This function does not user the buffer and
 // always creates a new connection.
-// Try not to use this function ---the function
+// Try not to use this function —the function
 // you're looking for is probably ReadBytes().
 func (q *QRand) Read(rand []byte) (int, os.Error) {
 	q.l.Lock() // Prevent double dials
@@ -202,12 +201,11 @@ func (q *QRand) Float64() (r float64, err os.Error) {
 // from the relevant web-site.
 // When host and/or port are empty,
 // they are replaced by the default values, Host and Port.
-func NewQRand(user, pass string, cachesize int, host, port string) (*QRand, os.Error) {
-	if cachesize < CacheSizeMin { cachesize = CacheSizeMin }
+func NewQRand(user, pass string, buffersize int, host, port string) (*QRand, os.Error) {
 	if host == "" { host = Host }
 	if port == "" { port = Port }
 	q := &QRand{ user: user, pass: pass }
-	buf, err := bufio.NewReaderSize(q, cachesize)
+	buf, err := bufio.NewReaderSize(q, buffersize)
 	if err != nil { return nil, err }
 	q.buf = buf
 	return q, nil
