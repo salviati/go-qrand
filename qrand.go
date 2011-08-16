@@ -28,6 +28,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"os"
+	"bufio"
+	"io"
 )
 
 const (
@@ -58,8 +60,7 @@ var remedy = []string{
 }
 
 type QRand struct {
-	buffer, b  []byte
-	buffersize int
+	buf        *bufio.Reader
 	user, pass string
 	l          sync.Mutex
 }
@@ -113,68 +114,16 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 
 // ReadData tries to read len(b) bytes of data into b.
 // It returns the number of bytes actually read, which can be less than len(b).
+// An error is returned if fewer bytes are read.
 func (q *QRand) ReadBytes(p []byte) (int, os.Error) {
-	if len(p) == 0 {
-		return 0, nil
-	}
-
-	q.l.Lock()
-	defer q.l.Unlock()
-
-	// We have enough data in the buffer
-	if len(q.b) >= len(p) {
-		copy(p, q.b[:len(p)])
-		q.b = q.b[len(p):]
-		return len(p), nil
-	}
-
-	read := 0
-	// First empty the buffer
-	copy(p, q.b)
-	p = p[len(q.b):]
-	read += len(q.b)
-	q.b = q.b[:0]
-
-	// If required data is greater than buffer size, directly read into p
-	if len(p) > len(q.buffer) {
-		n, err := q.Read(p)
-		read += n
-		if err != nil {
-			return read, err
-		}
-		return read, err
-	}
-
-	// Fill in the buffer, and read from it.
-	n, err := q.Read(q.buffer)
-	if err != nil {
-		return n, err
-	}
-	q.b = q.buffer[:n]
-
-	if len(q.b) >= len(p) {
-		copy(p, q.b[:len(p)])
-		read += len(p)
-		q.b = q.b[len(p):]
-		return read, nil
-	}
-
-	// Shouldn't happen normally
-	copy(p, q.b)
-	read += len(q.b)
-	q.b = q.b[:0]
-	return read, nil
+	return io.ReadFull(q.buf, p)
 }
 
 func (q *QRand) readBytes(n int) ([]byte, os.Error) {
 	rand := make([]byte, n)
-	read, err := q.ReadBytes(rand)
+	_, err := q.ReadBytes(rand)
 	if err != nil {
 		return rand, err
-	}
-	if read != n {
-		emsg := fmt.Sprintf("qrand: Receieved insufficient data; requested: %d, received: %d", n, read)
-		return rand, os.NewError(emsg)
 	}
 	return rand, nil
 }
@@ -257,7 +206,7 @@ func (q *QRand) Float32() (r float32, err os.Error) {
 	if err != nil {
 		return 0, err
 	}
-	return float32(n) / (1<<32), err
+	return float32(n) / (1 << 32), err
 }
 
 // Float64 fetches 64-bit random data and returns it as a float64 in [0.0,1.0)
@@ -266,7 +215,7 @@ func (q *QRand) Float64() (r float64, err os.Error) {
 	if err != nil {
 		return 0, err
 	}
-	return float64(n) / (1<<64), err
+	return float64(n) / (1 << 64), err
 }
 
 // NewQRand creates a new instances of Quantum Random Bit Generator client.
@@ -284,5 +233,12 @@ func NewQRand(user, pass string, buffersize int, host, port string) (*QRand, os.
 	if port == "" {
 		port = Port
 	}
-	return &QRand{user: user, pass: pass, buffer: make([]byte, buffersize)}, nil
+
+	q := &QRand{user: user, pass: pass}
+	buf, err := bufio.NewReaderSize(q, buffersize)
+	if err != nil {
+		return nil, err
+	}
+	q.buf = buf
+	return q, nil
 }
