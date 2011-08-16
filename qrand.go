@@ -119,103 +119,92 @@ func (q *QRand) ReadBytes(p []byte) (int, os.Error) {
 	return io.ReadFull(q.buf, p)
 }
 
-func (q *QRand) readBytes(n int) ([]byte, os.Error) {
-	rand := make([]byte, n)
-	_, err := q.ReadBytes(rand)
-	if err != nil {
-		return rand, err
+func (q *QRand) readInto(v interface{}) os.Error {
+	n := 0
+
+	switch t := v.(type) {
+	case *uint8, *int8:
+		n = 1
+	case *uint16, *int16:
+		n = 2
+	case *uint32, *int32, *float32:
+		n = 4
+	case *uint64, *int64, *float64:
+		n = 8
+	default:
+		return os.NewError("qrand.readInto: unexpected data type")
 	}
-	return rand, nil
+
+	rand := make([]byte, n)
+	if _, err := q.ReadBytes(rand); err != nil {
+		return err
+	}
+	if n == 1 {
+		return nil
+	}
+	return binary.Read(bytes.NewBuffer(rand), binary.BigEndian, v)
 }
 
 // Uint8 fetches 8-bit random data and returns it as uint8.
-func (q *QRand) Uint8() (uint8, os.Error) {
-	data, err := q.readBytes(1)
-	return data[0], err
+func (q *QRand) Uint8() (r uint8, err os.Error) {
+	err = q.readInto(&r)
+	return
 }
 
 // Int8 fetches 8-bit random data and returns it as int8.
-func (q *QRand) Int8() (int8, os.Error) {
-	data, err := q.readBytes(1)
-	return int8(data[0]), err
+func (q *QRand) Int8() (r int8, err os.Error) {
+	err = q.readInto(&r)
+	return
 }
 
 // Uint16 fetches 16-bit random data and returns it as uint16.
 func (q *QRand) Uint16() (r uint16, err os.Error) {
-	data, err := q.readBytes(2)
-	if err != nil {
-		return 0, err
-	}
-	binary.Read(bytes.NewBuffer(data), binary.BigEndian, &r)
-	return r, err
+	err = q.readInto(&r)
+	return
 }
 
 // Int16 fetches 16-bit random data and returns it as int16.
 func (q *QRand) Int16() (r int16, err os.Error) {
-	data, err := q.readBytes(2)
-	if err != nil {
-		return 0, err
-	}
-	binary.Read(bytes.NewBuffer(data), binary.BigEndian, &r)
-	return r, err
+	err = q.readInto(&r)
+	return
 }
 
 // Uint32 fetches 32-bit random data and returns it as uint32.
 func (q *QRand) Uint32() (r uint32, err os.Error) {
-	data, err := q.readBytes(4)
-	if err != nil {
-		return 0, err
-	}
-	binary.Read(bytes.NewBuffer(data), binary.BigEndian, &r)
-	return r, err
+	err = q.readInto(&r)
+	return
 }
 
 // Int32 fetches 32-bit random data and returns it as int32.
 func (q *QRand) Int32() (r int32, err os.Error) {
-	data, err := q.readBytes(4)
-	if err != nil {
-		return 0, err
-	}
-	binary.Read(bytes.NewBuffer(data), binary.BigEndian, &r)
-	return r, err
+	err = q.readInto(&r)
+	return
 }
 
 // Uint64 fetches 64-bit random data and returns it as uint64.
 func (q *QRand) Uint64() (r uint64, err os.Error) {
-	data, err := q.readBytes(8)
-	if err != nil {
-		return 0, err
-	}
-	binary.Read(bytes.NewBuffer(data), binary.BigEndian, &r)
-	return r, err
+	err = q.readInto(&r)
+	return
 }
 
 // Int64 fetches 64-bit random data and returns it as int64.
 func (q *QRand) Int64() (r int64, err os.Error) {
-	data, err := q.readBytes(8)
-	if err != nil {
-		return 0, err
-	}
-	binary.Read(bytes.NewBuffer(data), binary.BigEndian, &r)
-	return r, err
+	err = q.readInto(&r)
+	return
 }
 
 // Float32 fetches 32-bit random data and returns it as a float32 in [0.0,1.0)
 func (q *QRand) Float32() (r float32, err os.Error) {
-	n, err := q.Uint32()
-	if err != nil {
-		return 0, err
-	}
-	return float32(n) / (1 << 32), err
+	err = q.readInto(&r)
+	r /= (1 << 32)
+	return
 }
 
 // Float64 fetches 64-bit random data and returns it as a float64 in [0.0,1.0)
 func (q *QRand) Float64() (r float64, err os.Error) {
-	n, err := q.Uint64()
-	if err != nil {
-		return 0, err
-	}
-	return float64(n) / (1 << 64), err
+	err = q.readInto(&r)
+	r /= (1 << 64)
+	return
 }
 
 // NewQRand creates a new instances of Quantum Random Bit Generator client.
