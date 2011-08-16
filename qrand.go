@@ -140,6 +140,7 @@ func (q *QRand) readInto(v interface{}) os.Error {
 		return err
 	}
 	if n == 1 {
+		p[0] = rand[0]
 		return nil
 	}
 	return binary.Read(bytes.NewBuffer(rand), binary.BigEndian, v)
