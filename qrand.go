@@ -62,7 +62,7 @@ var remedy = []string{
 type QRand struct {
 	buf        *bufio.Reader
 	user, pass string
-	l          sync.Mutex
+	sync.Mutex
 }
 
 // Read requests len(rand) bytes from QRNG server.
@@ -103,7 +103,21 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 	binary.Read(b, binary.BigEndian, &remedyCode)
 
 	if responseCode != 0 || remedyCode != 0 {
-		return 0, os.NewError("qrand: " + response[responseCode] + ": " + remedy[remedyCode])
+		var resp, rem string
+		
+		if int(responseCode) < len(response) {
+			resp = response[responseCode]
+		} else {
+			resp = fmt.Sprint("Unknown response code ", responseCode)
+		}
+		
+		if int(remedyCode) < len(remedy) {
+			rem = remedy[remedyCode]
+		} else {
+			resp = fmt.Sprint("Unknown remedy code ", remedyCode)
+		}
+
+		return 0, os.NewError("qrand: " + resp + ": " + rem)
 	}
 
 	var available uint32
@@ -116,6 +130,8 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 // It returns the number of bytes actually read, which can be less than len(b).
 // An error is returned if fewer bytes are read.
 func (q *QRand) ReadBytes(p []byte) (int, os.Error) {
+	q.Lock()
+	q.Unlock()
 	return io.ReadFull(q.buf, p)
 }
 
@@ -139,10 +155,7 @@ func (q *QRand) readInto(v interface{}) os.Error {
 	if _, err := q.ReadBytes(rand); err != nil {
 		return err
 	}
-	if n == 1 {
-		p[0] = rand[0]
-		return nil
-	}
+
 	return binary.Read(bytes.NewBuffer(rand), binary.BigEndian, v)
 }
 
