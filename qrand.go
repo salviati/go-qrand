@@ -131,7 +131,7 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 // An error is returned if fewer bytes are read.
 func (q *QRand) ReadBytes(p []byte) (int, os.Error) {
 	q.Lock()
-	q.Unlock()
+	defer q.Unlock()
 	return io.ReadFull(q.buf, p)
 }
 
