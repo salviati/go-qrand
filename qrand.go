@@ -104,13 +104,13 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 
 	if responseCode != 0 || remedyCode != 0 {
 		var resp, rem string
-		
+
 		if int(responseCode) < len(response) {
 			resp = response[responseCode]
 		} else {
 			resp = fmt.Sprint("Unknown response code ", responseCode)
 		}
-		
+
 		if int(remedyCode) < len(remedy) {
 			rem = remedy[remedyCode]
 		} else {
@@ -208,17 +208,17 @@ func (q *QRand) Int64() (r int64, err os.Error) {
 }
 
 // Float32 fetches 32-bit random data and returns it as a float32 in [0.0,1.0)
-func (q *QRand) Float32() (r float32, err os.Error) {
-	err = q.readInto(&r)
-	r /= (1 << 32)
-	return
+func (q *QRand) Float32() (float32, os.Error) {
+	var r uint32
+	err := q.readInto(&r)
+	return float32(r) / (1<<32), err
 }
 
 // Float64 fetches 64-bit random data and returns it as a float64 in [0.0,1.0)
-func (q *QRand) Float64() (r float64, err os.Error) {
-	err = q.readInto(&r)
-	r /= (1 << 64)
-	return
+func (q *QRand) Float64() (float64, os.Error) {
+	var r uint64
+	err := q.readInto(&r)
+	return float64(r) / (1<<64), err
 }
 
 // NewQRand creates a new instances of Quantum Random Bit Generator client.
