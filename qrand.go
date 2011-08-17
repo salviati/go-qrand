@@ -112,7 +112,7 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 	return int(available), err
 }
 
-// ReadData tries to read len(b) bytes of data into b.
+// ReadBytes tries to read len(b) bytes of data into b.
 // It returns the number of bytes actually read, which can be less than len(b).
 // An error is returned if fewer bytes are read.
 func (q *QRand) ReadBytes(p []byte) (int, os.Error) {
