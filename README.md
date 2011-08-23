@@ -8,6 +8,12 @@ You can use goinstall to install the library
 
      goinstall github.com/salviati/go-qrand
 
+or clone & build manually
+
+     git clone git://github.com/salviati/go-qrand
+     cd go-qrand
+     make install     
+
 Then you can import the package and start using it
 
      import qrand "github.com/salviati/go-qrand"
