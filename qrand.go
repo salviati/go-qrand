@@ -22,14 +22,14 @@
 package qrand
 
 import (
-	"sync"
-	"net"
-	"fmt"
+	"bufio"
 	"bytes"
 	"encoding/binary"
-	"os"
-	"bufio"
+	"errors"
+	"fmt"
 	"io"
+	"net"
+	"sync"
 )
 
 const (
@@ -70,7 +70,7 @@ type QRand struct {
 // always creates a new connection.
 // Try not to use this function —the function
 // you're looking for is probably ReadBytes().
-func (q *QRand) Read(rand []byte) (int, os.Error) {
+func (q *QRand) Read(rand []byte) (int, error) {
 	if len(rand) == 0 {
 		return 0, nil
 	}
@@ -117,7 +117,7 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 			resp = fmt.Sprint("Unknown remedy code ", remedyCode)
 		}
 
-		return 0, os.NewError("qrand: " + resp + ": " + rem)
+		return 0, errors.New("qrand: " + resp + ": " + rem)
 	}
 
 	var available uint32
@@ -129,13 +129,13 @@ func (q *QRand) Read(rand []byte) (int, os.Error) {
 // ReadBytes tries to read len(b) bytes of data into b.
 // It returns the number of bytes actually read, which can be less than len(b).
 // An error is returned if fewer bytes are read.
-func (q *QRand) ReadBytes(p []byte) (int, os.Error) {
+func (q *QRand) ReadBytes(p []byte) (int, error) {
 	q.Lock()
 	defer q.Unlock()
 	return io.ReadFull(q.buf, p)
 }
 
-func (q *QRand) readInto(v interface{}) os.Error {
+func (q *QRand) readInto(v interface{}) error {
 	n := 0
 
 	switch t := v.(type) {
@@ -148,7 +148,7 @@ func (q *QRand) readInto(v interface{}) os.Error {
 	case *uint64, *int64, *float64:
 		n = 8
 	default:
-		return os.NewError("qrand.readInto: unexpected data type")
+		return errors.New("qrand.readInto: unexpected data type")
 	}
 
 	rand := make([]byte, n)
@@ -160,65 +160,65 @@ func (q *QRand) readInto(v interface{}) os.Error {
 }
 
 // Uint8 fetches 8-bit random data and returns it as uint8.
-func (q *QRand) Uint8() (r uint8, err os.Error) {
+func (q *QRand) Uint8() (r uint8, err error) {
 	err = q.readInto(&r)
 	return
 }
 
 // Int8 fetches 8-bit random data and returns it as int8.
-func (q *QRand) Int8() (r int8, err os.Error) {
+func (q *QRand) Int8() (r int8, err error) {
 	err = q.readInto(&r)
 	return
 }
 
 // Uint16 fetches 16-bit random data and returns it as uint16.
-func (q *QRand) Uint16() (r uint16, err os.Error) {
+func (q *QRand) Uint16() (r uint16, err error) {
 	err = q.readInto(&r)
 	return
 }
 
 // Int16 fetches 16-bit random data and returns it as int16.
-func (q *QRand) Int16() (r int16, err os.Error) {
+func (q *QRand) Int16() (r int16, err error) {
 	err = q.readInto(&r)
 	return
 }
 
 // Uint32 fetches 32-bit random data and returns it as uint32.
-func (q *QRand) Uint32() (r uint32, err os.Error) {
+func (q *QRand) Uint32() (r uint32, err error) {
 	err = q.readInto(&r)
 	return
 }
 
 // Int32 fetches 32-bit random data and returns it as int32.
-func (q *QRand) Int32() (r int32, err os.Error) {
+func (q *QRand) Int32() (r int32, err error) {
 	err = q.readInto(&r)
 	return
 }
 
 // Uint64 fetches 64-bit random data and returns it as uint64.
-func (q *QRand) Uint64() (r uint64, err os.Error) {
+func (q *QRand) Uint64() (r uint64, err error) {
 	err = q.readInto(&r)
 	return
 }
 
 // Int64 fetches 64-bit random data and returns it as int64.
-func (q *QRand) Int64() (r int64, err os.Error) {
+func (q *QRand) Int64() (r int64, err error) {
 	err = q.readInto(&r)
 	return
 }
 
 // Float32 fetches 32-bit random data and returns it as a float32 in [0.0,1.0)
-func (q *QRand) Float32() (float32, os.Error) {
+func (q *QRand) Float32() (float32, error) {
 	var r uint32
 	err := q.readInto(&r)
-	return float32(r) / (1<<32), err
+	return float32(r) / (1 << 32), err
 }
 
 // Float64 fetches 64-bit random data and returns it as a float64 in [0.0,1.0)
-func (q *QRand) Float64() (float64, os.Error) {
+func (q *QRand) Float64() (float64, error) {
 	var r uint64
 	err := q.readInto(&r)
-	return float64(r) / (1<<64), err
+	return float64(r) / (1 << 64), err
 }
 
 // NewQRand creates a new instances of Quantum Random Bit Generator client.
@@ -226,9 +226,9 @@ func (q *QRand) Float64() (float64, os.Error) {
 // from the relevant web-site.
 // When host and/or port are empty,
 // they are replaced by the default values, Host and Port.
-func NewQRand(user, pass string, buffersize int, host, port string) (*QRand, os.Error) {
+func NewQRand(user, pass string, buffersize int, host, port string) (*QRand, error) {
 	if buffersize < 1 {
-		return nil, os.NewError("qrand: buffersize is too small.")
+		return nil, errors.New("qrand: buffersize is too small.")
 	}
 	if host == "" {
 		host = Host
