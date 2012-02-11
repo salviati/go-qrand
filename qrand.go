@@ -148,7 +148,7 @@ func (q *QRand) readInto(v interface{}) error {
 	case *uint64, *int64, *float64:
 		n = 8
 	default:
-		return errors.New("qrand.readInto: unexpected data type")
+		return errors.New(fmt.Sprint("qrand.readInto: unexpected data type ", t))
 	}
 
 	rand := make([]byte, n)
@@ -238,10 +238,8 @@ func NewQRand(user, pass string, buffersize int, host, port string) (*QRand, err
 	}
 
 	q := &QRand{user: user, pass: pass}
-	buf, err := bufio.NewReaderSize(q, buffersize)
-	if err != nil {
-		return nil, err
-	}
+	buf := bufio.NewReaderSize(q, buffersize)
+
 	q.buf = buf
 	return q, nil
 }
