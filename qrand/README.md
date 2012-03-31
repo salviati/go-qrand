@@ -10,7 +10,7 @@ You can use go tool to install the library
  
 Then you can import the package and start using it
 
-     import qrand "github.com/salviati/go-qrand/qrand"
+     import "github.com/salviati/go-qrand/qrand"
      ...
      q, err := qrand.NewQRand(user, pass, cachesize, qrand.Host, qrand.Port)
      if err != nil { ... }
