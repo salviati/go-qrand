@@ -6,11 +6,11 @@ Go client for quantum random number generator service at http://random.irb.hr
 
 You can use go tool to install the library
 
-     go get github.com/salviati/go-qrand
+     go get github.com/salviati/go-qrand/qrand
  
 Then you can import the package and start using it
 
-     import qrand "github.com/salviati/go-qrand"
+     import qrand "github.com/salviati/go-qrand/qrand"
      ...
      q, err := qrand.NewQRand(user, pass, cachesize, qrand.Host, qrand.Port)
      if err != nil { ... }
