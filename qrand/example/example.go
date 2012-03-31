@@ -23,7 +23,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	qrand "github.com/salviati/go-qrand"
+	"github.com/salviati/go-qrand/qrand"
 	"log"
 	"os"
 )
